@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.class
+.cache/
+*.pyc
+env/
+venv/
+ENV/
+.venv/
+.ipynb_checkpoints
+.streamlit/
+.vscode/
+.DS_Store
+*.csv
+*.json
