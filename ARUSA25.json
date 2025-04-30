@@ -1,0 +1,78 @@
+{
+  "ATTACK": {
+    "obligatorias": ["F_TIPO_TRY", "END", "EQ NAME"]
+  },
+  "TERRITORY": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "INTRO 22": {
+    "obligatorias": ["EQ NAME"],
+    "opcionales": ["ACTION"]
+  },
+  "CLEAN BREAKS": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "FREE KICK": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "GOAL": {
+    "obligatorias": ["EQ NAME", "TANTOS", "RESULTADO"],
+    "opcionales": ["JERSEY"]
+  },
+  "KICK IN PLAY": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "KO": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "KO [2]": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "KO [3]": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "LOST": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "MISSED TACKLE": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "OFFLOAD": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "PEN KICK OUT": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "PENALTY CONCEDED": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "RESTART": {
+    "obligatorias": ["EQ NAME", "RESULTADO"]
+  },
+  "RUCK": {
+    "obligatorias": ["SPEEDST", "EQ NAME", "RESULTADO", "SPEEDEN", "ZONA"]
+  },
+  "SCRUM": {
+    "obligatorias": ["EQ NAME", "RESULTADO"],
+    "opcionales": ["ACTION"]
+  },
+  "LINEOUT": {
+    "obligatorias": ["EQ NAME", "RESULTADO"],
+    "opcionales": ["ACTION"]
+  },
+  "TIME OUT": {
+    "obligatorias": ["ACTION"]
+  },
+  "SEQ": {
+    "obligatorias": ["F_TIPO_TRY", "END", "EQ NAME"]
+  },
+  "TACKLE MADE": {
+    "obligatorias": ["EQ NAME"]
+  },
+  "TRY": {
+    "obligatorias": ["EQ NAME", "TANTOS", "F_TIPO_TRY"]
+  },
+  "TURNOVER": {
+    "obligatorias": ["EQ NAME"]
+  }
+}
