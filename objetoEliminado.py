@@ -26,7 +26,7 @@ def eliminar_objetos(json_file):
         json.dump(data, f, indent=4)
 
 # Ruta al archivo JSON
-archivo_json = "datos.json"
+archivo_json = "datoseliminados.json"
 
 # Llamar a la función para eliminar los objetos
 eliminar_objetos(archivo_json)
