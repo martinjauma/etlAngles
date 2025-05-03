@@ -91,7 +91,7 @@ def limpiar_nombre_archivo(nombre):
 # Streamlit App
 st.title("Validador de Clips por Row Name y Categorías")
 
-uploaded_clips = st.file_uploader("📼 Subí el archivo JSON con los datos de los clips", type="json")
+uploaded_clips = st.file_uploader("📼 Subí el archivo JSON a revisar", type="json")
 uploaded_reglas = st.file_uploader("📋 Subí el archivo JSON con las reglas (por row_name)", type="json")
 
 if uploaded_clips and uploaded_reglas:
