@@ -121,7 +121,7 @@ if uploaded_clips and uploaded_reglas:
             st.dataframe(df_errores, use_container_width=True)
 
             # Mostrar nombre generado
-            st.info(f"Nombre del archivo: **{nombre_base}.csv**")
+            st.info(f"Nombre del archivo: **{nombre_base}-ETL.csv**")
 
             # Descargar CSV con nombre limpio
             csv = df_errores.to_csv(index=False)
