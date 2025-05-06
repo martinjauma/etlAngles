@@ -5,53 +5,54 @@ from autenticacion import verificar_acceso
 st.set_page_config(layout="wide")
 import os
 
-# --- FUNCIÓN DE LOGIN ---
 def verificar_acceso():
     if "autenticado" not in st.session_state:
         st.session_state["autenticado"] = False
         st.session_state["usuario"] = None
 
-    # Si ya está autenticado, mostramos nombre de usuario y botón para cerrar sesión
+    # Ya está logueado
     if st.session_state["autenticado"]:
         st.sidebar.success(f"👤 Sesión iniciada como: {st.session_state['usuario']}")
         if st.sidebar.button("🔒 Cerrar sesión"):
             st.session_state["autenticado"] = False
             st.session_state["usuario"] = None
-            # Limpiar el caché de la aplicación para reiniciar el flujo
-            st.legacy_caching.clear_cache()
-            return  # Salimos para que se muestre el resto de la app
-
-        return  # Salimos para que no se muestre el formulario de login
+            st.info("Sesión cerrada. Recargá la página si querés volver a ingresar.")
+            st.stop()
+        return
 
     # FORMULARIO DE LOGIN
     st.title("🔐 Login")
-    usuario = st.text_input("Usuario")
-    password = st.text_input("Contraseña", type="password")
+    input_user = st.text_input("Usuario")
+    input_pass = st.text_input("Contraseña", type="password")
 
     if st.button("Ingresar"):
         try:
-            with open("usuarios.json", "r") as file:
-                usuarios = json.load(file)
+            secrets = st.secrets["usuario"]
+            # Convertimos todos los secretos en un dict de pares usuario:contraseña
+            usuarios = {}
+            for key, value in secrets.items():
+                if key.startswith("usuario_"):
+                    num = key.split("_")[1]
+                    usuario = value
+                    password = secrets.get(f"password_{num}", "")
+                    usuarios[usuario] = password
 
-            # Recorremos lista de usuarios buscando match
-            for user in usuarios:
-                if user["username"] == usuario and user["password"] == password:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario"] = usuario
-                    st.success("Acceso concedido")
-                    # Limpiar el caché de la aplicación para reiniciar el flujo
-                    st.legacy_caching.clear_cache()
-                    return
-
-            st.error("Usuario o contraseña incorrectos")
+            # Validación
+            if input_user in usuarios and usuarios[input_user] == input_pass:
+                st.session_state["autenticado"] = True
+                st.session_state["usuario"] = input_user
+                st.success("✅ Acceso concedido")
+                st.stop()
+            else:
+                st.error("❌ Usuario o contraseña incorrectos")
 
         except Exception as e:
             st.error(f"Error al cargar usuarios: {e}")
+            st.stop()
 
-    st.stop()  # Detiene el resto de la app si no está logueado
+    st.stop()
 
-
-# --- LLAMADA A FUNCIÓN DE LOGIN ---
+# ---- LLAMADA A LA FUNCIÓN ----
 verificar_acceso()
 
 
