@@ -10,7 +10,6 @@ def verificar_acceso():
         st.session_state["autenticado"] = False
         st.session_state["usuario"] = None
 
-    # Ya está logueado
     if st.session_state["autenticado"]:
         st.sidebar.success(f"👤 Sesión iniciada como: {st.session_state['usuario']}")
         if st.sidebar.button("🔒 Cerrar sesión"):
@@ -20,7 +19,6 @@ def verificar_acceso():
             st.stop()
         return
 
-    # FORMULARIO DE LOGIN
     st.title("🔐 Login")
     input_user = st.text_input("Usuario")
     input_pass = st.text_input("Contraseña", type="password")
@@ -28,16 +26,11 @@ def verificar_acceso():
     if st.button("Ingresar"):
         try:
             secrets = st.secrets["usuario"]
-            # Convertimos todos los secretos en un dict de pares usuario:contraseña
-            usuarios = {}
-            for key, value in secrets.items():
-                if key.startswith("usuario_"):
-                    num = key.split("_")[1]
-                    usuario = value
-                    password = secrets.get(f"password_{num}", "")
-                    usuarios[usuario] = password
+            usuarios = {
+                secrets[f"usuario_{i}"]: secrets.get(f"password_{i}", "")
+                for i in range(1, 10) if f"usuario_{i}" in secrets
+            }
 
-            # Validación
             if input_user in usuarios and usuarios[input_user] == input_pass:
                 st.session_state["autenticado"] = True
                 st.session_state["usuario"] = input_user
@@ -45,22 +38,16 @@ def verificar_acceso():
                 st.stop()
             else:
                 st.error("❌ Usuario o contraseña incorrectos")
-
         except Exception as e:
             st.error(f"Error al cargar usuarios: {e}")
             st.stop()
 
     st.stop()
 
-# ---- LLAMADA A LA FUNCIÓN ----
 verificar_acceso()
 
-
-# --- CÓDIGO PRINCIPAL DE LA APP (si pasó el login) ---
 st.title("🎯 Bienvenido a tu validador")
-st.write("Este contenido solo es visible si estás autenticado.")
 
-# Función para limpiar nombre del archivo
 def limpiar_nombre_archivo(nombre):
     return re.sub(r'[^\w\-_.]', '_', nombre)
 
@@ -89,7 +76,6 @@ def validar_qualifiers(data, reglas):
 
             categorias_presentes = [q.get("category") for q in qualifiers_array if isinstance(q, dict)]
             conteo_categorias = Counter(categorias_presentes)
-
             todas_las_categorias_presentes.extend(categorias_presentes)
 
             for categoria in obligatorias:
@@ -144,53 +130,45 @@ def validar_qualifiers(data, reglas):
     return tabla_resumen
 
 
-# Streamlit App
-st.title("Validador de Clips por Row Name y Categorías")
+# ---- Subida de archivos solo una vez ----
+if "clips" not in st.session_state:
+    uploaded_clips = st.file_uploader("📼 Subí el archivo JSON a revisar", type="json", key="clips_uploader")
+    if uploaded_clips:
+        st.session_state["clips"] = json.load(uploaded_clips)
+        st.success("✅ Archivo de clips cargado correctamente.")
 
-uploaded_clips = st.file_uploader("📼 Subí el archivo JSON a revisar", type="json")
-uploaded_reglas = st.file_uploader("📋 Subí el archivo JSON con las reglas (por row_name)", type="json")
+if "reglas" not in st.session_state:
+    uploaded_reglas = st.file_uploader("📋 Subí el archivo de reglas (JSON)", type="json", key="reglas_uploader")
+    if uploaded_reglas:
+        st.session_state["reglas"] = json.load(uploaded_reglas)
+        st.success("✅ Reglas cargadas correctamente.")
 
-if uploaded_clips is not None:
-    st.session_state["clips"] = json.load(uploaded_clips)
-
-if uploaded_reglas is not None:
-    st.session_state["reglas"] = json.load(uploaded_reglas)
-
+# ---- Validación y descarga ----
 if "clips" in st.session_state and "reglas" in st.session_state:
     try:
         reglas = st.session_state["reglas"]
-        if not isinstance(reglas, dict):
-            raise ValueError("El archivo de reglas debe contener un diccionario con row_names y sus categorías.")
-
         data_dict = st.session_state["clips"]
-        if "rows" not in data_dict:
-            raise ValueError("El archivo JSON con los clips debe contener una clave 'rows'.")
-
-        rows_data = data_dict["rows"]
-        nombre_crudo = data_dict.get("description", "errores_clips")
+        rows_data = data_dict.get("rows", [])
+        nombre_crudo = data_dict.get("description", "datosoriginales")
         nombre_base = limpiar_nombre_archivo(nombre_crudo)
-
-        with st.expander("📖 Reglas Cargadas (click para ver)"):
-            st.json(reglas)
 
         resumen_errores = validar_qualifiers(rows_data, reglas)
 
+        st.subheader("📄 Resumen de errores")
         if resumen_errores:
-            st.error(f"Se encontraron {len(resumen_errores)} errores en total.")
             df_errores = pd.DataFrame(resumen_errores)
             st.dataframe(df_errores, use_container_width=True)
-
-            st.info(f"Nombre del archivo: **{nombre_base}-ETL.csv**")
-
             csv = df_errores.to_csv(index=False)
-            st.download_button(
-                label="📥 Descargar errores como CSV",
-                data=csv,
-                file_name=f"{nombre_base}.csv",
-                mime="text/csv"
-            )
+            st.download_button("📥 Descargar errores CSV", csv, file_name=f"{nombre_base}-ETL.csv", mime="text/csv")
         else:
-            st.success("✔ Todos los clips cumplen con las reglas.")
+            st.success("🎉 No se encontraron errores en los clips.")
 
+        # Descargar JSON original modificado
+        st.download_button(
+            label="💾 Descargar JSON original",
+            data=json.dumps(data_dict, indent=2),
+            file_name=f"{nombre_base}-mod.json",
+            mime="application/json"
+        )
     except Exception as e:
-        st.error(f"Error procesando el archivo de los clips o las reglas: {e}")
+        st.error(f"❌ Error procesando datos: {e}")
