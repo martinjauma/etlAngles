@@ -27,17 +27,19 @@ def verificar_acceso():
 
     if st.button("Ingresar"):
         try:
-            with open("usuarios.json", "r") as file:
-                usuarios = json.load(file)
+            # Usar st.secrets para cargar usuarios y contraseñas
+            usuarios = {
+                "MAJ": st.secrets["usuario"]["usuario_1"],
+                "usu": st.secrets["usuario"]["password_2"]
+            }
 
-            # Recorremos lista de usuarios buscando match
-            for user in usuarios:
-                if user["username"] == usuario and user["password"] == password:
-                    st.session_state["autenticado"] = True
-                    st.session_state["usuario"] = usuario
-                    st.success("Acceso concedido")
-                    st.experimental_rerun()
-                    return
+            # Verificamos si el usuario existe y la contraseña es correcta
+            if usuario in usuarios and usuarios[usuario] == password:
+                st.session_state["autenticado"] = True
+                st.session_state["usuario"] = usuario
+                st.success("Acceso concedido")
+                st.experimental_rerun()
+                return
 
             st.error("Usuario o contraseña incorrectos")
 
