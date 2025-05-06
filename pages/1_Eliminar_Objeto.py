@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 
+st.set_page_config(layout="wide")
 st.title("🧹 Eliminar categoría / nombre del JSON")
 
 uploaded_file = st.file_uploader("📤 Subí tu archivo JSON", type="json")
@@ -9,46 +10,82 @@ if uploaded_file:
     try:
         data = json.load(uploaded_file)
         rows = data.get("rows", [])
+        sin_qualifiers_logs = []
 
-        # Obtener categorías y nombres únicos
+        row_names = sorted({row.get("row_name", "SIN NOMBRE") for row in rows if "clips" in row})
+        row_selected = st.selectbox("🎯 Seleccionar Row", options=["TODOS"] + row_names)
+
         categorias = set()
         nombres = set()
 
         for row in rows:
+            if row_selected != "TODOS" and row.get("row_name") != row_selected:
+                continue
             for clip in row.get("clips", []):
-                qualifiers = clip.get("qualifiers", {}).get("qualifiers_array", [])
-                for q in qualifiers:
+                qualifiers_array = clip.get("qualifiers", {}).get("qualifiers_array")
+                if qualifiers_array is None:
+                    sin_qualifiers_logs.append(row.get("row_name", "SIN NOMBRE"))
+                    continue
+                for q in qualifiers_array:
                     if isinstance(q, dict):
                         categorias.add(q.get("category", ""))
+        
+        categoria_a_borrar = st.selectbox("🗂️ Seleccioná la categoría a eliminar", sorted(categorias))
+
+        nombres.clear()
+        for row in rows:
+            if row_selected != "TODOS" and row.get("row_name") != row_selected:
+                continue
+            for clip in row.get("clips", []):
+                qualifiers_array = clip.get("qualifiers", {}).get("qualifiers_array")
+                if qualifiers_array is None:
+                    continue
+                for q in qualifiers_array:
+                    if isinstance(q, dict) and q.get("category") == categoria_a_borrar:
                         nombres.add(q.get("name", ""))
 
-        categoria_a_borrar = st.selectbox("Seleccioná la categoría a eliminar", sorted(categorias))
-        borrar_por_nombre = st.checkbox("❓ Eliminar sólo ese nombre", value=True)
-
+        borrar_por_nombre = st.checkbox("❓ Eliminar sólo un nombre específico", value=True)
+        nombre_a_borrar = None
         if borrar_por_nombre:
-            nombre_a_borrar = st.selectbox("Seleccioná el nombre a eliminar", sorted(nombres))
-        else:
-            nombre_a_borrar = None  # No importa el nombre
+            nombre_a_borrar = st.selectbox("🔠 Seleccioná el nombre a eliminar", sorted(nombres))
+
+        # Vista previa
+        mostrar_preview = st.checkbox("👁️ Ver cuántos qualifiers se eliminarán", value=True)
+        total_encontrados = 0
+
+        if mostrar_preview:
+            for row in rows:
+                if row_selected != "TODOS" and row.get("row_name") != row_selected:
+                    continue
+                for clip in row.get("clips", []):
+                    qualifiers_array = clip.get("qualifiers", {}).get("qualifiers_array", [])
+                    for q in qualifiers_array:
+                        if isinstance(q, dict) and q.get("category") == categoria_a_borrar:
+                            if not nombre_a_borrar or q.get("name") == nombre_a_borrar:
+                                total_encontrados += 1
+            st.info(f"👀 Se eliminarán {total_encontrados} qualifiers.")
 
         if st.button("🗑️ Eliminar del JSON"):
-            filtros = [{'category': categoria_a_borrar}]
-            if nombre_a_borrar:
-                filtros[0]['name'] = nombre_a_borrar
-
-            # Función de limpieza general
+            total_eliminados = 0
             for row in rows:
+                if row_selected != "TODOS" and row.get("row_name") != row_selected:
+                    continue
                 for clip in row.get("clips", []):
-                    qualifiers = clip.get("qualifiers", {}).get("qualifiers_array", [])
-                    clip["qualifiers"]["qualifiers_array"] = [
-                        q for q in qualifiers
-                        if not (q.get("category") == filtros[0].get('category') and
-                                (filtros[0].get('name') is None or q.get("name") == filtros[0].get('name')))
+                    qualifiers_array = clip.get("qualifiers", {}).get("qualifiers_array")
+                    if qualifiers_array is None:
+                        continue
+                    originales = len(qualifiers_array)
+                    qualifiers_filtrados = [
+                        q for q in qualifiers_array
+                        if not (q.get("category") == categoria_a_borrar and
+                                (not nombre_a_borrar or q.get("name") == nombre_a_borrar))
                     ]
+                    eliminados = originales - len(qualifiers_filtrados)
+                    total_eliminados += eliminados
+                    clip["qualifiers"]["qualifiers_array"] = qualifiers_filtrados
 
-            st.success("Se eliminaron las entradas correctamente.")
+            st.success(f"✅ Se eliminaron {total_eliminados} qualifiers del JSON.")
 
-            # Descargar
-            data["rows"] = rows
             st.download_button(
                 label="📥 Descargar JSON modificado",
                 data=json.dumps(data, indent=2),
@@ -56,5 +93,10 @@ if uploaded_file:
                 mime="application/json"
             )
 
+        if sin_qualifiers_logs:
+            with st.expander("ℹ️ Clips sin qualifiers"):
+                for name in sin_qualifiers_logs:
+                    st.markdown(f"• El row **'{name}'** tiene un clip sin qualifiers.")
+
     except Exception as e:
-        st.error(f"Error al procesar el archivo: {e}")
+        st.error(f"❌ Error al procesar el archivo: {e}")
