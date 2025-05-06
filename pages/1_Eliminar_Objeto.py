@@ -4,35 +4,49 @@ import json
 st.set_page_config(layout="wide")
 st.title("🧹 Eliminar categoría / nombre del JSON")
 
+# Cargar archivo si no está ya en session_state
+if "json_data" not in st.session_state:
+    st.session_state["json_data"] = None
+    st.session_state["rows"] = []
+
 uploaded_file = st.file_uploader("📤 Subí tu archivo JSON", type="json")
 
-if uploaded_file:
+if uploaded_file is not None and st.session_state["json_data"] is None:
     try:
         data = json.load(uploaded_file)
         rows = data.get("rows", [])
-        sin_qualifiers_logs = []
+        st.session_state["json_data"] = data
+        st.session_state["rows"] = rows
+    except Exception as e:
+        st.error(f"❌ Error al procesar el archivo: {e}")
 
-        row_names = sorted({row.get("row_name", "SIN NOMBRE") for row in rows if "clips" in row})
-        row_selected = st.selectbox("🎯 Seleccionar Row", options=["TODOS"] + row_names)
+# Continuar solo si hay datos en session_state
+if st.session_state["json_data"] is not None:
+    data = st.session_state["json_data"]
+    rows = st.session_state["rows"]
 
-        categorias = set()
-        nombres = set()
+    sin_qualifiers_logs = []
+    row_names = sorted({row.get("row_name", "SIN NOMBRE") for row in rows if "clips" in row})
+    row_selected = st.selectbox("🎯 Seleccionar Row", options=["TODOS"] + row_names)
 
-        for row in rows:
-            if row_selected != "TODOS" and row.get("row_name") != row_selected:
+    categorias = set()
+    nombres = set()
+
+    for row in rows:
+        if row_selected != "TODOS" and row.get("row_name") != row_selected:
+            continue
+        for clip in row.get("clips", []):
+            qualifiers_array = clip.get("qualifiers", {}).get("qualifiers_array")
+            if qualifiers_array is None:
+                sin_qualifiers_logs.append(row.get("row_name", "SIN NOMBRE"))
                 continue
-            for clip in row.get("clips", []):
-                qualifiers_array = clip.get("qualifiers", {}).get("qualifiers_array")
-                if qualifiers_array is None:
-                    sin_qualifiers_logs.append(row.get("row_name", "SIN NOMBRE"))
-                    continue
-                for q in qualifiers_array:
-                    if isinstance(q, dict):
-                        categorias.add(q.get("category", ""))
-        
+            for q in qualifiers_array:
+                if isinstance(q, dict):
+                    categorias.add(q.get("category", ""))
+
+    if categorias:
         categoria_a_borrar = st.selectbox("🗂️ Seleccioná la categoría a eliminar", sorted(categorias))
 
-        nombres.clear()
         for row in rows:
             if row_selected != "TODOS" and row.get("row_name") != row_selected:
                 continue
@@ -49,7 +63,6 @@ if uploaded_file:
         if borrar_por_nombre:
             nombre_a_borrar = st.selectbox("🔠 Seleccioná el nombre a eliminar", sorted(nombres))
 
-        # Vista previa
         mostrar_preview = st.checkbox("👁️ Ver cuántos qualifiers se eliminarán", value=True)
         total_encontrados = 0
 
@@ -93,10 +106,7 @@ if uploaded_file:
                 mime="application/json"
             )
 
-        if sin_qualifiers_logs:
-            with st.expander("ℹ️ Clips sin qualifiers"):
-                for name in sin_qualifiers_logs:
-                    st.markdown(f"• El row **'{name}'** tiene un clip sin qualifiers.")
-
-    except Exception as e:
-        st.error(f"❌ Error al procesar el archivo: {e}")
+    if sin_qualifiers_logs:
+        with st.expander("ℹ️ Clips sin qualifiers"):
+            for name in sin_qualifiers_logs:
+                st.markdown(f"• El row **'{name}'** tiene un clip sin qualifiers.")

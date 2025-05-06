@@ -4,6 +4,10 @@ import pandas as pd
 from collections import Counter
 import re
 
+# Función para limpiar nombre del archivo
+def limpiar_nombre_archivo(nombre):
+    return re.sub(r'[^\w\-_.]', '_', nombre)
+
 def validar_qualifiers(data, reglas):
     errores = []
     tabla_resumen = []
@@ -83,10 +87,6 @@ def validar_qualifiers(data, reglas):
 
     return tabla_resumen
 
-# Función para limpiar nombre del archivo
-def limpiar_nombre_archivo(nombre):
-    # Reemplaza cualquier cosa que no sea letra, número, guion o punto por "_"
-    return re.sub(r'[^\w\-_.]', '_', nombre)
 
 # Streamlit App
 st.title("Validador de Clips por Row Name y Categorías")
@@ -94,19 +94,25 @@ st.title("Validador de Clips por Row Name y Categorías")
 uploaded_clips = st.file_uploader("📼 Subí el archivo JSON a revisar", type="json")
 uploaded_reglas = st.file_uploader("📋 Subí el archivo JSON con las reglas (por row_name)", type="json")
 
-if uploaded_clips and uploaded_reglas:
+# Guardar archivos en el estado de sesión
+if uploaded_clips is not None:
+    st.session_state["clips"] = json.load(uploaded_clips)
+
+if uploaded_reglas is not None:
+    st.session_state["reglas"] = json.load(uploaded_reglas)
+
+# Procesar si ambos están disponibles en el estado
+if "clips" in st.session_state and "reglas" in st.session_state:
     try:
-        reglas = json.load(uploaded_reglas)
+        reglas = st.session_state["reglas"]
         if not isinstance(reglas, dict):
             raise ValueError("El archivo de reglas debe contener un diccionario con row_names y sus categorías.")
 
-        data_dict = json.load(uploaded_clips)
+        data_dict = st.session_state["clips"]
         if "rows" not in data_dict:
             raise ValueError("El archivo JSON con los clips debe contener una clave 'rows'.")
 
         rows_data = data_dict["rows"]
-
-        # Extraer y limpiar el nombre desde 'description'
         nombre_crudo = data_dict.get("description", "errores_clips")
         nombre_base = limpiar_nombre_archivo(nombre_crudo)
 
@@ -120,10 +126,8 @@ if uploaded_clips and uploaded_reglas:
             df_errores = pd.DataFrame(resumen_errores)
             st.dataframe(df_errores, use_container_width=True)
 
-            # Mostrar nombre generado
             st.info(f"Nombre del archivo: **{nombre_base}-ETL.csv**")
 
-            # Descargar CSV con nombre limpio
             csv = df_errores.to_csv(index=False)
             st.download_button(
                 label="📥 Descargar errores como CSV",
