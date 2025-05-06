@@ -3,6 +3,59 @@ import json
 import pandas as pd
 from collections import Counter
 import re
+import os
+
+# --- FUNCIÓN DE LOGIN ---
+def verificar_acceso():
+    if "autenticado" not in st.session_state:
+        st.session_state["autenticado"] = False
+        st.session_state["usuario"] = None
+
+    # Si ya está autenticado, mostramos nombre de usuario y botón para cerrar sesión
+    if st.session_state["autenticado"]:
+        st.sidebar.success(f"👤 Sesión iniciada como: {st.session_state['usuario']}")
+        if st.sidebar.button("🔒 Cerrar sesión"):
+            st.session_state["autenticado"] = False
+            st.session_state["usuario"] = None
+            st.experimental_rerun()
+        return  # Salimos para que se muestre el resto de la app
+
+    # FORMULARIO DE LOGIN
+    st.title("🔐 Login")
+    usuario = st.text_input("Usuario")
+    password = st.text_input("Contraseña", type="password")
+
+    if st.button("Ingresar"):
+        try:
+            with open("usuarios.json", "r") as file:
+                usuarios = json.load(file)
+
+            # Recorremos lista de usuarios buscando match
+            for user in usuarios:
+                if user["username"] == usuario and user["password"] == password:
+                    st.session_state["autenticado"] = True
+                    st.session_state["usuario"] = usuario
+                    st.success("Acceso concedido")
+                    st.experimental_rerun()
+                    return
+
+            st.error("Usuario o contraseña incorrectos")
+
+        except Exception as e:
+            st.error(f"Error al cargar usuarios: {e}")
+
+    st.stop()  # Detiene el resto de la app si no está logueado
+
+
+# --- LLAMADA A FUNCIÓN DE LOGIN ---
+verificar_acceso()
+
+# --- CÓDIGO PRINCIPAL DE LA APP (si pasó el login) ---
+st.title("🎯 Bienvenido a tu validador")
+st.write("Este contenido solo es visible si estás autenticado.")
+
+
+
 
 # Función para limpiar nombre del archivo
 def limpiar_nombre_archivo(nombre):
@@ -94,14 +147,12 @@ st.title("Validador de Clips por Row Name y Categorías")
 uploaded_clips = st.file_uploader("📼 Subí el archivo JSON a revisar", type="json")
 uploaded_reglas = st.file_uploader("📋 Subí el archivo JSON con las reglas (por row_name)", type="json")
 
-# Guardar archivos en el estado de sesión
 if uploaded_clips is not None:
     st.session_state["clips"] = json.load(uploaded_clips)
 
 if uploaded_reglas is not None:
     st.session_state["reglas"] = json.load(uploaded_reglas)
 
-# Procesar si ambos están disponibles en el estado
 if "clips" in st.session_state and "reglas" in st.session_state:
     try:
         reglas = st.session_state["reglas"]
