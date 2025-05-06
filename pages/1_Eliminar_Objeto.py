@@ -64,20 +64,12 @@ if "json_data" not in st.session_state:
 
 uploaded_file = st.file_uploader("📤 Subí tu archivo JSON", type="json")
 
-# Si se carga un nuevo archivo JSON, reseteamos los filtros
-if uploaded_file is not None:
+if uploaded_file is not None and st.session_state["json_data"] is None:
     try:
         data = json.load(uploaded_file)
         rows = data.get("rows", [])
         st.session_state["json_data"] = data
         st.session_state["rows"] = rows
-
-        # Reseteamos filtros al cargar un nuevo archivo
-        st.session_state["row_selected"] = "TODOS"
-        st.session_state["categoria_a_borrar"] = ""
-        st.session_state["nombre_a_borrar"] = None
-        st.session_state["mostrar_preview"] = True
-
     except Exception as e:
         st.error(f"❌ Error al procesar el archivo: {e}")
 
@@ -88,11 +80,12 @@ if st.session_state["json_data"] is not None:
 
     sin_qualifiers_logs = []
     row_names = sorted({row.get("row_name", "SIN NOMBRE") for row in rows if "clips" in row})
-    row_selected = st.selectbox("🎯 Seleccionar Row", options=["TODOS"] + row_names, key="row_selected")
+    row_selected = st.selectbox("🎯 Seleccionar Row", options=["TODOS"] + row_names)
 
     categorias = set()
     nombres = set()
 
+    # Obtener categorías y nombres
     for row in rows:
         if row_selected != "TODOS" and row.get("row_name") != row_selected:
             continue
@@ -104,10 +97,13 @@ if st.session_state["json_data"] is not None:
             for q in qualifiers_array:
                 if isinstance(q, dict):
                     categorias.add(q.get("category", ""))
+                    nombres.add(q.get("name", ""))
 
     if categorias:
-        categoria_a_borrar = st.selectbox("🗂️ Seleccioná la categoría a eliminar", sorted(categorias), key="categoria_a_borrar")
+        categoria_a_borrar = st.selectbox("🗂️ Seleccioná la categoría a eliminar", sorted(categorias))
 
+        # Filtrar los nombres relacionados con la categoría seleccionada
+        nombres_filtrados = set()
         for row in rows:
             if row_selected != "TODOS" and row.get("row_name") != row_selected:
                 continue
@@ -117,14 +113,14 @@ if st.session_state["json_data"] is not None:
                     continue
                 for q in qualifiers_array:
                     if isinstance(q, dict) and q.get("category") == categoria_a_borrar:
-                        nombres.add(q.get("name", ""))
+                        nombres_filtrados.add(q.get("name", ""))
 
-        borrar_por_nombre = st.checkbox("❓ Eliminar sólo un nombre específico", value=True, key="borrar_por_nombre")
+        borrar_por_nombre = st.checkbox("❓ Eliminar sólo un nombre específico", value=True)
         nombre_a_borrar = None
-        if borrar_por_nombre:
-            nombre_a_borrar = st.selectbox("🔠 Seleccioná el nombre a eliminar", sorted(nombres), key="nombre_a_borrar")
+        if borrar_por_nombre and nombres_filtrados:
+            nombre_a_borrar = st.selectbox("🔠 Seleccioná el nombre a eliminar", sorted(nombres_filtrados))
 
-        mostrar_preview = st.checkbox("👁️ Ver cuántos qualifiers se eliminarán", value=True, key="mostrar_preview")
+        mostrar_preview = st.checkbox("👁️ Ver cuántos qualifiers se eliminarán", value=True)
         total_encontrados = 0
 
         if mostrar_preview:
