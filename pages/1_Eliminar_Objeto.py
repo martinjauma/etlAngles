@@ -17,8 +17,11 @@ def verificar_acceso():
         if st.sidebar.button("🔒 Cerrar sesión"):
             st.session_state["autenticado"] = False
             st.session_state["usuario"] = None
-            st.experimental_rerun()
-        return  # Salimos para que se muestre el resto de la app
+            # Limpiar el caché de la aplicación para reiniciar el flujo
+            st.legacy_caching.clear_cache()
+            return  # Salimos para que se muestre el resto de la app
+
+        return  # Salimos para que no se muestre el formulario de login
 
     # FORMULARIO DE LOGIN
     st.title("🔐 Login")
@@ -27,19 +30,18 @@ def verificar_acceso():
 
     if st.button("Ingresar"):
         try:
-            # Usar st.secrets para cargar usuarios y contraseñas
-            usuarios = {
-                "MAJ": st.secrets["usuario"]["usuario_1"],
-                "usu": st.secrets["usuario"]["password_2"]
-            }
+            with open("usuarios.json", "r") as file:
+                usuarios = json.load(file)
 
-            # Verificamos si el usuario existe y la contraseña es correcta
-            if usuario in usuarios and usuarios[usuario] == password:
-                st.session_state["autenticado"] = True
-                st.session_state["usuario"] = usuario
-                st.success("Acceso concedido")
-                st.experimental_rerun()
-                return
+            # Recorremos lista de usuarios buscando match
+            for user in usuarios:
+                if user["username"] == usuario and user["password"] == password:
+                    st.session_state["autenticado"] = True
+                    st.session_state["usuario"] = usuario
+                    st.success("Acceso concedido")
+                    # Limpiar el caché de la aplicación para reiniciar el flujo
+                    st.legacy_caching.clear_cache()
+                    return
 
             st.error("Usuario o contraseña incorrectos")
 
@@ -51,6 +53,7 @@ def verificar_acceso():
 
 # --- LLAMADA A FUNCIÓN DE LOGIN ---
 verificar_acceso()
+
 
 # --- CÓDIGO PRINCIPAL DE LA APP (si pasó el login) ---
 st.title("🎯 Bienvenido a tu validador")
