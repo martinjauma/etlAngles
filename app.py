@@ -190,16 +190,5 @@ if "clips" in st.session_state and "reglas" in st.session_state:
         else:
             st.success("✔ Todos los clips cumplen con las reglas.")
 
-        # Eliminar un objeto específico en el JSON (por ejemplo, por "row_name")
-        row_name_to_remove = st.text_input("Eliminar objeto por 'row_name'", "")
-        if row_name_to_remove:
-            rows_data = [row for row in rows_data if row.get("row_name") != row_name_to_remove]
-            st.session_state["clips"]["rows"] = rows_data
-            st.success(f"Objeto con row_name '{row_name_to_remove}' eliminado.")
-
-        # Mostrar JSON actualizado
-        with st.expander("📖 JSON actualizado (click para ver)"):
-            st.json(st.session_state["clips"])
-
     except Exception as e:
         st.error(f"Error procesando el archivo de los clips o las reglas: {e}")
