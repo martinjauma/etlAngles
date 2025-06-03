@@ -60,8 +60,8 @@ if uploaded_file:
                 punto_sumado = False
                 icono = ""
 
-                if tipo_evento == "TRY" and "TRY" in tantos:
-                    if tipo_especial == "PENAL":
+                if tipo_evento in ["TRY", "TRY PENAL"]:
+                    if tipo_evento == "TRY PENAL" or tipo_especial == "PENAL":
                         resumen[eq_name]["tries_penales"] += 1
                         resumen[eq_name]["puntos"] += 7
                         punto_sumado = True
