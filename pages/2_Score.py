@@ -1,8 +1,22 @@
 import streamlit as st
 import json
 from datetime import timedelta
+from autenticacion import mostrar_formulario_login
 
-st.set_page_config(layout="wide")
+# --- VERIFICACIÓN DE LOGIN ---
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    mostrar_formulario_login()
+    st.stop()
+
+# --- BARRA LATERAL DE SESIÓN ---
+st.sidebar.success(f"👤 Sesión iniciada")
+if st.sidebar.button("🔒 Cerrar sesión"):
+    st.session_state.logged_in = False
+    st.rerun()
+
 st.title("📊 Resumen de Puntos - Partido de Rugby")
 
 uploaded_file = st.file_uploader("📁 Sube el archivo JSON de Timeline", type="json")

@@ -1,63 +1,28 @@
 import streamlit as st
+from autenticacion import mostrar_formulario_login
 import json
 import pandas as pd
-from collections import Counter
 import re
-import os
+from collections import Counter
 
-def verificar_acceso():
-    if "autenticado" not in st.session_state:
-        st.session_state["autenticado"] = False
-        st.session_state["usuario"] = None
+# --- GESTIÓN DE ESTADO DE LOGIN ---
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 
-    # Ya está logueado
-    if st.session_state["autenticado"]:
-        st.sidebar.success(f"👤 Sesión iniciada como: {st.session_state['usuario']}")
-        if st.sidebar.button("🔒 Cerrar sesión"):
-            st.session_state["autenticado"] = False
-            st.session_state["usuario"] = None
-            st.info("Sesión cerrada. Recargá la página si querés volver a ingresar.")
-            st.stop()
-        return
-
-    # FORMULARIO DE LOGIN
-    st.title("🔐 Login")
-    input_user = st.text_input("Usuario")
-    input_pass = st.text_input("Contraseña", type="password")
-
-    if st.button("Ingresar"):
-        try:
-            secrets = st.secrets["usuario"]
-            # Convertimos todos los secretos en un dict de pares usuario:contraseña
-            usuarios = {}
-            for key, value in secrets.items():
-                if key.startswith("usuario_"):
-                    num = key.split("_")[1]
-                    usuario = value
-                    password = secrets.get(f"password_{num}", "")
-                    usuarios[usuario] = password
-
-            # Validación
-            if input_user in usuarios and usuarios[input_user] == input_pass:
-                st.session_state["autenticado"] = True
-                st.session_state["usuario"] = input_user
-                st.success("✅ Acceso concedido")
-                st.stop()
-            else:
-                st.error("❌ Usuario o contraseña incorrectos")
-
-        except Exception as e:
-            st.error(f"Error al cargar usuarios: {e}")
-            st.stop()
-
+# --- PANTALLA DE LOGIN ---
+if not st.session_state.logged_in:
+    mostrar_formulario_login()
     st.stop()
 
-# ---- LLAMADA A LA FUNCIÓN ----
-verificar_acceso()
+# --- SI ESTÁ LOGUEADO, MOSTRAR APP PRINCIPAL ---
+st.sidebar.success(f"👤 Sesión iniciada")
+if st.sidebar.button("🔒 Cerrar sesión"):
+    st.session_state.logged_in = False
+    st.rerun()
 
-# --- CÓDIGO PRINCIPAL DE LA APP (si pasó el login) ---
-st.title("🎯 Bienvenido a tu validador")
-st.write("Este contenido solo es visible si estás autenticado.")
+# El resto de tu código de la aplicación principal va aquí
+# ... (el código de validación de clips, etc.) ...
+
 
 # Función para limpiar nombre del archivo
 def limpiar_nombre_archivo(nombre):
