@@ -4,6 +4,18 @@ import json
 import pandas as pd
 import re
 from collections import Counter
+import os
+
+# Código de depuración para listar archivos
+try:
+     project_root = '/mount/src/etlangles'
+     st.warning(f"Contenido de la raíz del proyecto ({project_root}):")
+     st.write(os.listdir(project_root))
+except Exception as e:
+     st.error(f"No se pudo listar el directorio: {e}")
+  # --- FIN DEL CÓDIGO DE DEPURACIÓN ---
+from autenticacion import mostrar_formulario_login
+
 
 # --- GESTIÓN DE ESTADO DE LOGIN ---
 if 'logged_in' not in st.session_state:
