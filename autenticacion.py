@@ -10,7 +10,7 @@ def verificar_acceso(username, password):
     try:
         # Usamos una ruta relativa al script para encontrar usuarios.json
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        archivo_json = os.path.join(base_dir, "usuarios.json") # Subimos un nivel para encontrarlo
+        archivo_json = os.path.join(base_dir, "usuarios.json")
 
         if not os.path.exists(archivo_json):
             # Este error es para el desarrollador, no debería aparecer en producción
