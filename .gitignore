@@ -13,4 +13,5 @@ ENV/
 .DS_Store
 *.csv
 *.json
-usuarios.json
+
+
