@@ -61,7 +61,7 @@ def validar_qualifiers(data, reglas):
                     tipo_error = "obligatoria faltante" if conteo_categorias[categoria] == 0 else "obligatoria repetida"
                     tabla_resumen.append({
                         "row_name": row_name,
-                        "clip_index": i,
+                        "clip": i + 1,
                         "categoría": categoria,
                         "tipo_error": tipo_error
                     })
@@ -70,7 +70,7 @@ def validar_qualifiers(data, reglas):
                 if conteo_categorias[categoria] > 1:
                     tabla_resumen.append({
                         "row_name": row_name,
-                        "clip_index": i,
+                        "clip": i + 1,
                         "categoría": categoria,
                         "tipo_error": "opcional repetida"
                     })
@@ -80,7 +80,7 @@ def validar_qualifiers(data, reglas):
             for extra in categorias_extra:
                 tabla_resumen.append({
                     "row_name": row_name,
-                    "clip_index": i,
+                    "clip": i + 1,
                     "categoría": extra,
                     "tipo_error": "no permitida"
                 })
@@ -90,7 +90,7 @@ def validar_qualifiers(data, reglas):
         for cat in faltantes_generales:
             tabla_resumen.append({
                 "row_name": row_name,
-                "clip_index": "TODOS",
+                "clip": "TODOS",
                 "categoría": cat,
                 "tipo_error": "obligatoria nunca presente"
             })
@@ -100,7 +100,7 @@ def validar_qualifiers(data, reglas):
     for nombre in reglas_no_utilizadas:
         tabla_resumen.append({
             "row_name": nombre,
-            "clip_index": "NINGUNO",
+            "clip": "NINGUNO",
             "categoría": "-",
             "tipo_error": "regla no usada (no hay clips)"
         })
