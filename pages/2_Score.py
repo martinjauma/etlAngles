@@ -23,13 +23,13 @@ uploaded_file = st.file_uploader("📁 Sube el archivo JSON de Timeline", type="
 
 def convertir_a_hora_minuto_segundos(segundos):
     """Convierte el tiempo en segundos a formato hh:mm:ss.00"""
-    # Convertimos a formato hh:mm:ss
-    tiempo = str(timedelta(seconds=segundos))
-    # Aseguramos que esté en el formato adecuado, añadiendo milisegundos
-    horas, minutos, segundos = tiempo.split(":")
-    segundos, milisegundos = segundos.split(".")
-    # Reagregamos milisegundos al final
-    return f"{horas}:{minutos}:{segundos}.{milisegundos[:2]}"
+    td = timedelta(seconds=float(segundos))
+    total_segundos = int(td.total_seconds())
+    horas = total_segundos // 3600
+    minutos = (total_segundos % 3600) // 60
+    segs = total_segundos % 60
+    milisegundos = int(td.microseconds / 10000)  # Dos dígitos de milisegundos
+    return f"{horas:02d}:{minutos:02d}:{segs:02d}.{milisegundos:02d}"
 
 if uploaded_file:
     try:
